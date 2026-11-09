@@ -614,22 +614,26 @@ METRIC_INFO_V3: Dict[int, Tuple[str, str, str]] = {
     0: ("fp_hex_4", "Parmak Izi Hex 4", "fingerprint"),
     10: ("canvas_fp", "Canvas Parmak Izi Hash", "fingerprint"),
     21: ("architecture", "Islemci Mimarisi (x86/arm)", "system"),
+    22: ("inner_width", "Pencere Ic Genisligi (innerWidth)", "screen"),
     29: ("browser_ver_detail", "Tarayici Surumu (Detay)", "browser"),
+    34: ("fp_hex_34", "Parmak Izi Hex 34", "fingerprint"),
     43: ("webdriver_flag", "WebDriver / Otomasyon Bayragi", "probe"),
     53: ("os_arch", "IS + Mimari Birlesik", "system"),
     57: ("engine_version", "Motor Surumu (Chromium/OS)", "system"),
-    60: ("tz_offset_raw", "Saat Dilimi Ofseti (dk)", "system"),
+    60: ("tz_offset_raw", "Saat Dilimi Ofseti / Kodu", "system"),
     64: ("locale", "Yerel Ayar (Locale)", "system"),
     68: ("automation_flag_1", "Otomasyon Kontrol Bayragi 1", "probe"),
     77: ("error_probe_type", "Hata Probu: RangeError", "probe"),
     78: ("shader_hash_str", "WebGL Shader Hash + Tip", "fingerprint"),
     84: ("session_id", "Oturum Kimligi (Session ID)", "session"),
+    85: ("hw_concurrency", "Islemci Cekirdek Sayisi (hardwareConcurrency)", "system"),
     87: ("os_name", "Isletim Sistemi Adi", "system"),
     89: ("timezone", "Saat Dilimi (IANA)", "system"),
     92: ("automation_flag_2", "Otomasyon Kontrol Bayragi 2", "probe"),
     96: ("user_agent", "User-Agent", "browser"),
     98: ("error_probe_inv", "Hata Probu: Illegal Invocation", "probe"),
     100: ("feature_flags_bin", "Ozellik Bayrak Dizisi (Binary)", "probe"),
+    105: ("perf_code_105", "Performans Sabiti (1000)", "event"),
     108: ("engine_ver_dup", "Motor Surumu (Kopya)", "browser"),
     121: ("display_type", "Goruntu Tipi (screen)", "screen"),
     122: ("accept_langs", "Kabul Edilen Diller", "browser"),
@@ -637,19 +641,25 @@ METRIC_INFO_V3: Dict[int, Tuple[str, str, str]] = {
     135: ("language", "Birincil Dil Kodu", "system"),
     157: ("origin_url", "Kaynak URL (location.origin)", "network"),
     160: ("device_uuid", "Cihaz UUID", "session"),
+    163: ("screen_width", "Ekran Genisligi (px)", "screen"),
     168: ("css_selector_fp", "CSS Selector Destegi", "probe"),
     169: ("castle_pubkey", "Castle Ortam / Public Key", "token"),
     174: ("secondary_ts", "Ikincil Zaman Damgasi (Sayfa Yukleme)", "session"),
     176: ("automation_flag_3", "Otomasyon Kontrol Bayragi 3", "probe"),
     179: ("audio_fp", "AudioContext Parmak Izi Hash", "fingerprint"),
+    180: ("fp_hex_180", "Parmak Izi Hex 180", "fingerprint"),
     183: ("date_probe", "Tarih Format Probu (Intl)", "system"),
     209: ("local_ip_fallback", "Yerel IP Fallback", "network"),
     212: ("client_ip", "Istemci IP Adresi (WebRTC)", "network"),
     218: ("chrome_runtime_flag", "Chrome Runtime Spoof Bayragi", "probe"),
+    221: ("fp_hex_221", "Parmak Izi Hex 221", "fingerprint"),
+    223: ("color_depth", "Renk Derinligi (bit)", "screen"),
     228: ("automation_flag_4", "Otomasyon Kontrol Bayragi 4", "probe"),
     232: ("session_id_dup", "Oturum Kimligi (Kopya)", "session"),
     237: ("gpu_renderer", "GPU Renderer (WebGL)", "browser"),
     244: ("automation_flag_5", "Otomasyon Kontrol Bayragi 5", "probe"),
+    255: ("media_cap_kn", "Medya Oynatma Yetenegi (Kn)", "media"),
+    258: ("inner_height", "Pencere Ic Yuksekligi (innerHeight)", "screen"),
     265: ("webgl_fp", "WebGL Render Parmak Izi Hash", "fingerprint"),
     296: ("gpu_renderer_dup", "GPU Renderer (Kopya)", "browser"),
     306: ("shader_source", "WebGL Shader Kaynak Kodu", "probe"),
@@ -657,21 +667,29 @@ METRIC_INFO_V3: Dict[int, Tuple[str, str, str]] = {
     355: ("headless_flag", "Headless Tarayici Bayragi", "probe"),
     373: ("zero_flags", "Sifir Bayrak Dizisi", "probe"),
     375: ("window_prop_check", "Window Ozellik Dogrulamasi", "probe"),
+    393: ("media_cap_maybe", "Medya Oynatma Yetenegi (maybe)", "media"),
+    396: ("hw_concurrency_dup", "Islemci Cekirdek Sayisi (Kopya)", "system"),
     398: ("browser_vendor", "Tarayici Ureticisi (navigator.vendor)", "browser"),
     402: ("arch_bits", "Islemci Bit Genisligi (64/32)", "system"),
     412: ("page_title", "Sayfa Basligi (document.title)", "network"),
     414: ("screen_orient", "Ekran Yonu (Orientation)", "screen"),
     416: ("automation_flag_6", "Otomasyon Kontrol Bayragi 6", "probe"),
+    430: ("storage_hash_str", "Depolama / Izin Sabiti", "system"),
     431: ("error_probe_prop", "Hata Probu: Property Access", "probe"),
     433: ("webrtc_proto", "WebRTC Aktarim Protokolu", "probe"),
+    444: ("na_probe_str", "Mevcut Degil Kodu (NA)", "probe"),
     445: ("cdp_code", "CDP / DevTools Tespit Kodu ('N'=Temiz)", "probe"),
+    463: ("fp_hex_463", "Parmak Izi Hex 463", "fingerprint"),
     477: ("chrome_obj_present", "window.chrome Nesnesi Mevcut", "browser"),
+    483: ("screen_height", "Ekran Yuksekligi (px)", "screen"),
     492: ("render_engine", "Render Motoru", "browser"),
+    497: ("fp_hex_497", "Parmak Izi Hex 497", "fingerprint"),
     504: ("build_id", "Tarayici Build ID (productSub)", "browser"),
     506: ("selenium_cdc_flag", "Selenium / ChromeDriver ($cdc_) Bayragi", "probe"),
     510: ("perf_memory_present", "Performance Memory Mevcut", "browser"),
     512: ("visibility", "Sayfa Gorunurlugu (visibilityState)", "session"),
     517: ("chrome_csi_present", "Chrome CSI/LoadTimes Dogrulamasi", "browser"),
+    520: ("media_cap_gn", "Medya Oynatma Yetenegi (Gn)", "media"),
     522: ("ua_dup", "User-Agent (Kopya)", "browser"),
     523: ("ua_brands", "UA Marka Bilgisi (Tam JSON)", "browser"),
     527: ("automation_flag_7", "Otomasyon Kontrol Bayragi 7", "probe"),
@@ -681,14 +699,20 @@ METRIC_INFO_V3: Dict[int, Tuple[str, str, str]] = {
     555: ("last_event", "Son Kullanici Etkilesim Olayi", "event"),
     558: ("proto_probe", "Prototip Dongu Probu (__proto__)", "probe"),
     573: ("gpu_vendor", "GPU Ureticisi", "browser"),
+    578: ("screen_width_neg", "Ekran Genisligi (Negatif Kontrol)", "screen"),
     592: ("browser_name", "Tarayici Adi", "browser"),
     597: ("stack_probe", "Yigin Derinlik Probu (Call Stack)", "probe"),
     598: ("site_domain", "Site Alan Adi (location.hostname)", "network"),
     632: ("ua_brands_short", "UA Marka (Kisa JSON)", "browser"),
     636: ("url_path", "URL Yolu (location.pathname)", "network"),
+    647: ("screen_width_dup", "Ekran Genisligi (Kopya)", "screen"),
     650: ("fp_hex_2", "Parmak Izi Hex 2", "fingerprint"),
     655: ("feature_support_flag", "Tarayici Ozellik Destegi Bayragi", "browser"),
+    668: ("device_memory", "Cihaz Bellegi (GB)", "system"),
     670: ("browser_version", "Tarayici Surumu", "browser"),
+    678: ("tz_offset_hex", "Saat Dilimi Ofseti (Hex)", "system"),
+    682: ("fp_hex_682", "Parmak Izi Hex 682", "fingerprint"),
+    684: ("history_length", "Tarayici Gecmis Uzunlugu (history.length)", "session"),
     # 687..771: Zamanlama Problari (Qd Float32 ms)
     751: ("probe_time_sync_total", "Senkron Problar Toplam Suresi (ms)", "event"),
     752: ("probe_time_total_token", "Toplam Token Uretim Suresi (ms)", "event"),
@@ -713,12 +737,36 @@ METRIC_INFO_V3: Dict[int, Tuple[str, str, str]] = {
     771: ("probe_time_async_17", "Asenkron Prob 17: rAF Zamanlayici (ms)", "event"),
 }
 
+_V3_INT_A_PROFILE_INDICES = {22, 60, 163, 223, 258, 483, 578, 647, 668}
+_V3_INT_B_PROFILE_INDICES = {85, 396}
+
+def _v3_decode_int(idx: int, val: Any) -> Any:
+    """V3 Grup A ve Grup B sifreli tam sayi alanlarini (ekran, bellek, cekirdek) cozumler."""
+    if not isinstance(val, int) or isinstance(val, bool):
+        return val
+    if idx in _V3_INT_A_PROFILE_INDICES:
+        u = val & 0xFFFFFFFF
+        rv = ((u >> 2) | (u << 30)) & 0xFFFFFFFF
+        diff = (312282 - rv) & 0xFFFFFFFF
+        if diff >= 0x80000000:
+            diff -= 0x100000000
+        if diff % 381 == 0:
+            x = diff // 381
+            if -100000 <= x <= 100000:
+                return x
+    elif idx in _V3_INT_B_PROFILE_INDICES:
+        if (val & 7) == 7:
+            k = (val >> 3) - 6150
+            if -1000 <= k <= 1000:
+                return k
+    return val
+
 def _is_valid_decoded_text(decoded: str) -> bool:
     if not decoded:
         return False
     for ch in decoded:
         c = ord(ch)
-        if not ((32 <= c <= 126) or c in (9, 10, 13) or (0x00A0 <= c <= 0x024F)):
+        if not ((32 <= c <= 126) or c in (9, 10, 13) or (0x00A0 <= c <= 0x024F) or (0x2000 <= c <= 0x206F)):
             return False
     return True
 
@@ -1017,6 +1065,7 @@ class PureCastleDecoder:
                     if fval is not None:
                         cleaned_metrics[i] = fval
                         continue
+                cleaned_metrics[i] = _v3_decode_int(i, cleaned_metrics[i])
                 cleaned_metrics[i] = _v3_decode_value(cleaned_metrics[i])
                 cleaned_metrics[i] = clean_string_value(cleaned_metrics[i])
         elif version == 2:
@@ -1098,7 +1147,9 @@ class PureCastleDecoder:
                 or _is_bool_true(cleaned_metrics, 527)
                 or _is_bool_true(cleaned_metrics, 535)
             )
-            screen_res = f"{platform} {arch}".strip()
+            sw = _m(cleaned_metrics, 163, None)
+            sh = _m(cleaned_metrics, 483, None)
+            screen_res = f"{sw}x{sh} ({platform} {arch})".strip() if (isinstance(sw, int) and isinstance(sh, int)) else f"{platform} {arch}".strip()
             font_signatures = cleaned_metrics[687:751] if len(cleaned_metrics) >= 751 else []
         elif version == 2:
             client_os = _m(cleaned_metrics, 8, "Bilinmiyor")
