@@ -51,6 +51,7 @@ from decode_token import (
     METRIC_LABELS,
     METRIC_INFO_V2,
     METRIC_INFO_V3,
+    METRIC_INFO_V4,
     PureCastleDecoder,
 )
 
@@ -247,6 +248,85 @@ def encode_kn(text: str) -> str:
         out.append((v >> 8) & 0xFF)
         out.append(v & 0xFF)
     return base64.b64encode(bytes(out)).decode("ascii")
+
+
+def encode_nr(text: str) -> str:
+    """
+    V4 nr() String & Timestamp Key Encoder (EZK-f_Qb):
+      v = (code ^ 0x2042) & 0xFFFF
+      v = (v + 0x486D) & 0xFFFF
+      v = ROR5(v)
+      Big-endian uint16 -> Base64
+    """
+    out = bytearray()
+    for ch in text:
+        v = (ord(ch) ^ 0x2042) & 0xFFFF
+        v = (v + 0x486D) & 0xFFFF
+        v = ((v >> 5) | (v << 11)) & 0xFFFF
+        out.append((v >> 8) & 0xFF)
+        out.append(v & 0xFF)
+    return base64.b64encode(bytes(out)).decode("ascii")
+
+
+def decode_nr(b64_str: str) -> Optional[str]:
+    """Hàm giải mã ngược của V4 nr()."""
+    if not isinstance(b64_str, str) or len(b64_str) < 4:
+        return None
+    try:
+        padded = b64_str + "=" * (-len(b64_str) % 4)
+        raw = base64.b64decode(padded)
+        if len(raw) < 2 or len(raw) % 2 != 0:
+            return None
+        chars = []
+        for i in range(0, len(raw), 2):
+            val = (raw[i] << 8) | raw[i + 1]
+            val = ((val << 5) | (val >> 11)) & 0xFFFF
+            val = (val - 0x486D) & 0xFFFF
+            val = (val ^ 0x2042) & 0xFFFF
+            chars.append(chr(val))
+        return "".join(chars)
+    except Exception:
+        return None
+
+
+def encode_wd_float32(val: float) -> str:
+    """
+    V4 Wd() 4-byte Float32 Timing Probe Encoder (indices 691..775):
+      Inverse của _wd_decode_float32:
+      r = ROL8(r, 1)
+      r = (r + 118) & 0xFF
+      r = ROL8(r, 5)
+    """
+    raw = struct.pack(">f", float(val))
+    out = bytearray(4)
+    for i in range(4):
+        r = raw[i]
+        r = ((r << 1) | (r >> 7)) & 0xFF
+        r = (r + 118) & 0xFF
+        r = ((r << 5) | (r >> 3)) & 0xFF
+        out[i] = r
+    return base64.b64encode(bytes(out)).decode("ascii")
+
+
+def decode_wd_float32_exact(b64_str: str) -> Optional[float]:
+    """Giải mã ngược V4 Wd() Float32 giữ nguyên độ chính xác IEEE-754 float32."""
+    if not isinstance(b64_str, str) or len(b64_str) < 4:
+        return None
+    try:
+        padded = b64_str + "=" * (-len(b64_str) % 4)
+        raw = base64.b64decode(padded)
+        if len(raw) != 4:
+            return None
+        out = bytearray(4)
+        for i in range(4):
+            r = raw[i]
+            r = ((r >> 5) | (r << 3)) & 0xFF
+            r = (r - 118) & 0xFF
+            r = ((r >> 1) | (r << 7)) & 0xFF
+            out[i] = r
+        return struct.unpack(">f", bytes(out))[0]
+    except Exception:
+        return None
 
 
 def decode_kn(b64_str: str) -> Optional[str]:
@@ -827,7 +907,20 @@ def encrypt_with_security_header(
     out[4:8] = struct.pack(">I", n8)
 
     # Tham số FNV-1a + Xorshift32 + 16-byte Checksum Signature theo phiên bản
-    if version == 3:
+    if version == 4:
+        fnv_offset = 0xA72E5B0C
+        c1, c2, c3 = 0x17113533, 0x48375C16, 0x0DDA1DEC
+        seg2_xor1, seg_xor2 = 0x3B4091B7, 0x9AB81E61
+        seg1_xor1 = 0x99191B64
+        mask_seed_xor = 0xD389F06A
+        glob_xor = 0xBE1BCF4B
+        glob_add = 0xB7E64091
+        seg_add, seg_xor = 0xB270070C, 0x072E62D5
+        fin1_params = (0x0B56DEBB, 1, 0x4796C8DB, 0x6E1BBEDD)
+        fin2_params = (0x4FCEFD99, 2, 0x0ACA3E2F, 0xD9E34E86)
+        fin3_params = (0x9AB81E61, 3, 0xB270070D, 0x072E62D5)
+        fin4_params = (0x9AB81E61, 5, 0xB270070D, 0x072E62D5)
+    elif version == 3:
         fnv_offset = 0x4A391620
         c1, c2, c3 = 0x09007E08, 0x6F0FB60C, 0x391BF9C5
         seg2_xor1, seg_xor2 = 0x45B9AC9B, 0x8F60218D
@@ -1814,6 +1907,73 @@ class CastleFieldGenerator:
 
         return metrics
 
+    def generate_unencrypted_v4(
+        self,
+        profile: Optional[ClientProfile] = None,
+        overrides: Optional[Dict[Union[int, str], Any]] = None,
+        is_bot: bool = False,
+    ) -> List[Any]:
+        p = profile or ClientProfile()
+        metrics: List[Any] = list(V4_REAL_BASELINE_RAW)
+
+        canvas_hex = f"{p.canvas_hash:08x}" if isinstance(p.canvas_hash, int) else str(p.canvas_hash)
+        audio_hex = f"{p.audio_hash:08x}" if isinstance(p.audio_hash, int) else str(p.audio_hash)
+        webgl_hex = f"{p.webgl_fp:08x}" if isinstance(p.webgl_fp, int) else str(p.webgl_fp)
+        sec_ts_str = str(p.secondary_ts)
+
+        v4_defaults: Dict[int, Any] = {
+            1: p.page_title if p.page_title else metrics[1],
+            71: p.architecture,
+            111: p.gpu_renderer,
+            133: "639206892",
+            154: str(p.device_guid),
+            159: canvas_hex,
+            173: p.browser_version,
+            186: p.castle_pubkey,
+            190: p.webrtc_proto,
+            192: p.locale,
+            257: p.browser_version,
+            263: p.gpu_vendor,
+            269: "10.0.0" if "Windows" in p.operating_system else "1.0.0",
+            278: p.gpu_arch,
+            310: p.operating_system,
+            311: p.browser_name,
+            314: p.platform,
+            350: p.screen_orient,
+            428: p.gpu_renderer,
+            429: p.ip_address,
+            436: p.session_id,
+            458: p.ua_brands_short,
+            463: p.accept_langs,
+            483: p.user_agent,
+            505: p.protocol,
+            544: p.user_agent,
+            548: p.timezone,
+            554: p.url_path,
+            604: p.browser_vendor,
+            606: p.ua_brands,
+            618: p.origin_url,
+            620: p.site_domain,
+            646: "udg" if is_bot else "kpgg",
+        }
+
+        for idx, val in v4_defaults.items():
+            if val is not None and 0 <= idx < len(metrics):
+                metrics[idx] = val
+
+        if overrides:
+            slug_to_idx = {slug: idx for idx, (slug, _title, _cat) in METRIC_INFO_V4.items()}
+            for k, v in overrides.items():
+                if isinstance(k, int) and 0 <= k < len(metrics):
+                    metrics[k] = v
+                elif isinstance(k, str):
+                    if k.isdigit() and 0 <= int(k) < len(metrics):
+                        metrics[int(k)] = v
+                    elif k in slug_to_idx:
+                        metrics[slug_to_idx[k]] = v
+
+        return metrics
+
     def generate_unencrypted_metrics(
         self,
         version: Union[int, str] = 3,
@@ -1821,24 +1981,30 @@ class CastleFieldGenerator:
         overrides: Optional[Dict[Union[int, str], Any]] = None,
         is_bot: bool = False,
     ) -> List[Any]:
-        """Hàm tổng hợp sinh mảng metrics chưa mã hoá cho phiên bản V1, V2 hoặc V3."""
+        """Hàm tổng hợp sinh mảng metrics chưa mã hoá cho phiên bản V1, V2, V3 hoặc V4."""
         ver = self._normalize_version(version)
         if ver == 1:
             return self.generate_unencrypted_v1(profile=profile, overrides=overrides, is_bot=is_bot)
         if ver == 2:
             return self.generate_unencrypted_v2(profile=profile, overrides=overrides, is_bot=is_bot)
+        if ver == 4:
+            return self.generate_unencrypted_v4(profile=profile, overrides=overrides, is_bot=is_bot)
         return self.generate_unencrypted_v3(profile=profile, overrides=overrides, is_bot=is_bot)
 
     @staticmethod
     def _normalize_version(version: Union[int, str]) -> int:
         if isinstance(version, int):
-            return version if version in (1, 2, 3) else 3
+            return version if version in (1, 2, 3, 4) else 4
         v = str(version).strip().lower()
         if v in ("1", "v1", "uq1senrd"):
             return 1
         if v in ("2", "v2", "cnz8rpyh"):
             return 2
-        return 3
+        if v in ("3", "v3", "wcmfkzld"):
+            return 3
+        if v in ("4", "v4", "ezk-f_qb", "ezkf_qb"):
+            return 4
+        return 4
 
 
 # ===========================================================================
@@ -1869,6 +2035,8 @@ V3_RAW_STR_INDICES = frozenset({
 # Các chỉ số số nguyên thuộc Profile mã hoá theo Group A Integer Cipher và Group B Integer Cipher
 V3_INT_A_PROFILE_INDICES = frozenset({22, 60, 163, 223, 258, 483, 578, 647, 668})
 V3_INT_B_PROFILE_INDICES = frozenset({85, 396})
+
+V4_REAL_BASELINE_RAW = (4293368605, 'O0TLRntGw0MbRUJG80R7RhNFu0SDRBtFQkbzRHtGu0SDRPtE+0SjRMtEw0TLRJNEe0bTRntGO0Q=', 1530643103, 1418710237, 3349463409, 1135299, -293, 2613693720, 61580, 1761607689, 2321553135, 1377183021, 1761607689, 1761607689, 3493902965, 1445512083, 1182513581, 1135299, [436278284, 443524134], 1644167177, 2444128801, -293, 3724782185, 'vj', 9573, 1902900322, 2212345888, 4055344289, 1130364, -293, 770801451, 12776, 1761607689, 3469519621, 4294207555, 2054386675, 1627961437, -302, 1135299, 973078547, 'RMd', 144000868, 3060509206, 1465198815, 1135299, 2713194743, 1850243469, -293, 1761607689, 2855012788, 1761607689, 1135299, 303497227, 1166209779, 53116945, 1950771306, 2653004122, 1557856327, 881162077, 2844862591, 3260200407, 2694714767, 1761607689, -293, 4286319451, 2535491913, 2826565610, 381913226, 2436763826, 290140543, 'e4ab5ce0[]w3c[]hlsl', 'x86', 3808743980, 1644167177, 4716, 23372, 6015, 3340712080, 1135299, 1778384905, -475, 1761607689, 2196354021, 1135299, [345710901, 1437511161], 1854829594, 1135299, -293, '', 1761607689, -293, 'AnTz', 1133325, -294, 'navigate', -293, 1761607689, 3949897306, 1761607689, [3975829323, 3512442141], 150994959, 1761607689, -466, 963903814, 'L00000d158703800187001587c6000787c6041a15d3c60405001ac3c604021a1587c6041a8000i5duj5745', 4076051766, 1761607689, 4294207555, 3364471154, 2378164210, 3412133113, 'ANGLE (NVIDIA, NVIDIA GeForce GT 710 (0x0000128B) Direct3D11 vs_5_0 ps_5_0, D3D11)', 1135299, 2942839449, 'Yy', -293, 2277781591, 'probably', False, [703470760, 2225322817], 2794157962, 190898111, 797058397, -293, 1134312, 1135299, -922746867, 3677799066, 4145198989, [4110297431, 3617358604], 1778384905, -905969596, 'bS', '639206892', 62538, 2997784226, -293, 3903604929, 1452252823, -293, [3317361105, 345366548], 2081330930, 'Kb', '', 2131114725, [344787406, 1604285773], 4044116372, 1499632705, 4075736443, 787140309, 1135299, -293, 1524324783, 1244792680, '584705a1-112a-459c-9f93-b3225090eba5', 1134312, [4110382577, 3518935845], 1474879617, 1980579556, 'cc25e208', -2144503161, 62023, 4294703029, 3086012653, 1206968001, -294, 238443480, 1028832223, 4011895718, 1378965917, -293, -293, 1135299, '158.0.8127.37', 1983212697, 1051404, 759461242, 255733578, 563821696, -294, 2366183558, 1985346339, 3705330914, 1761607689, 2589888437, 543721488, 'pk_AvRa79bHyJSYSQHnRpcVtzyxetSvFerx', 2145856089, 887674082, -468, 'dtls-sctp+udp', 1135299, 'en-US', -293, -293, 'fa84436d', 60266, 1553564158, 2577744171, 3352610670, 29902, 1134312, 1644167177, 1737480431, 23519, 1158463578, 265682082, -293, 1135299, 1254306718, 'RangeError', 'Rh', -294, 4181050635, 2051121710, 26787, 2223396495, -385875957, 'ca945b0e', 1801619380, 264484006, 1134312, 975558958, 743397671, 1761607689, 427747625, 3361046745, -294, 2311133167, 1309111237, 1761607689, 1336308293, 2658085643, 1644167177, 1130364, 894471, 2182113222, 3156068104, 1049381116, 228246, 1644167177, 4058571677, 'db77b610', 'HHm', 2162445569, 4156789597, 'e11d254', -293, 2657069652, 417709412, 1761607689, 3682280691, 3573382261, '1111111111111111111111111111111111111000000000', 1326421317, 2189789705, -294, '158.0.8127.37', -479, 3177367381, 434410762, 1099971038, 53199, 'nvidia', 919775098, 1160236478, -293, 438857600, 3977953486, '10.0.0', 2891216860, 1147101710, 48612, '', 1170245320, 3255164384, 244490896, 1761607689, 'kepler', 2846591049, 2540728748, 1134312, 1644167177, 1673752103, 4287408112, 3063507328, 1853281202, 'RAEAfwO1eVcFAAP5Y9mWAAMXVKEWAAMGBTpyb290LwMILnItbWZoZzBhAjFbZGF0YS1zb25uZXItdG9hc3Rlcl1bZGlyPSJsdHIiXSwgaHRtbFtkaXI9Imx0ciJd6QJhEy5qZXRmdWVsLXN0eWxlLXJvb3SKBuIEHi5qZXRmdWVsLXN0eWxlLXJvb3QgLmotYnJsYzNkMDefAQYucUpUSE3jAVGAAwrUA6tBAk4yTexkBnRJYgAGdEliAAZ0SWIABnRJYgAGdEliAAZ0SWIALA4rjQAGdEliADx0YqABAAD8EK4OAQAA/BCuDqAJkLXm/PHsDnW6zgEtNzsOAaf4MDIBLTc7DiMiAAMDb8mW/sjW2pB5x/gE', 3134025794, 1134312, 53445749, 1046610442, -293, 3732019114, 1676885617, 3580221023, 1761607689, -293, 962303198, 3378567259, 1761607689, 'mousewheel', 67072437, 1127403, 1135299, 50540, 3036136217, 3028006545, 2901043255, '0000000000000000000000000000000000000000000', 'Windows', 'Google Chrome', 1135299, 'bd4be70d', 'Win32', [3418704335, 1553202146], 1134312, 694429999, 3880786239, 2047610112, 3124257722, False, 842705137, 1134312, [3569118758, 4183515958], 876152567, -301, False, 1644167177, 3484340511, 1422647569, 3161910737, 1761607689, 2047842790, 1761607689, 3769148619, '3/1/1970, 7:00:00 AM', -476, [2343394990, 2181949088], [1947496558, 3854425540], 2457716958, 'string', 2653525164, 2245455670, 1761607689, 1761607689, 4015790056, -294, -294, 1134312, 'landscape-primary', -293, -293, 2492147335, 1135299, -294, 2438843180, 1776780505, 2328472797, 768777394, 1455765497, 3235569594, False, 1543270845, 2614488241, 3626723661, 1135299, 281251324, False, 1134312, 'gM', '// INITIAL HLSL BEGIN#pragma warning( disable: 3081 3556 3557 3571 )#ifdef ANGLE_ENABLE_LOOP_FLATTEN#define LOOP [lo', 946475045, 900164379, 1208725341, 2905226987, 3856899895, 4257142306, 'visible', 1392575354, 3938452425, 980504865, 1135299, 3365530613, 2681921478, 1135299, '', 1135299, '1795749303558', 95075554, 1761607689, 2759816829, 1006929934, 1684793702, [3692375207, 3963465088], '0.0.0.0', 702383182, 1321748180, 1135299, 1750631691, '', 1135299, 827790482, 4076530660, 4028824125, -671088610, 56716, [2840764817, 3837321102], 3487029837, 3381687935, 4216646628, '34b454a7', 3287161176, 3194886395, 3448829438, 'I', 3629447896, 2917755328, 2092266599, 1134312, 1761607689, 'Windows', '', 1134312, 3484310551, 1747439329, 893786232, 3176520277, 'ANGLE (NVIDIA, NVIDIA GeForce GT 710 (0x0000128B) Direct3D11 vs_5_0 ps_5_0, D3D11)', '42.117.25.219', 'S', 2881270230, 1134312, 'webkit', '64', 1660773447, '9tykz5c3p', 827790482, 902291075, 'probably', 3057468746, 1644167177, 584860969, 2773163330, 2584284970, -293, -293, 1817112487, 452984844, 2128898487, -473, -293, 3721112844, 45967, 956301321, 656098717, -471, 1610612834, '[{"brand":"Chromium","version":"158"},{"brand":"Not.A/Brand","version":"24"},{"brand":"Google Chrome","version":"158"}]', 1536338982, 'l', 1134312, '8fc90f7d', 'en-US,en', 153965301, 570425357, -293, 1427992364, '9tykz5c3p', 593359077, 1392575354, 1130346098, 3613841626, [1047273484, 1769658542], False, 1671345699, 4153567024, 3737274201, 1135299, 3338634325, 1135299, 'ugUf', 1761607689, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36', 2585984493, 4152215439, "Cannot read properties of undefined (reading 'b')", 719070558, 440879987, 1644167177, -293, 1761607689, 1027495959, [2432198051, 2051746519], 1644167177, 1135299, 3084569752, 'Maximum call stack size exceeded', 2702032269, 769628479, -1996488702, 1132338, 1761607689, 2001644120, 3868898285, 'https:', 2014891189, 3508129121, 3359602349, 2959866917, 1118520, 33380, 1171524810, 'UAnu', 3759716716, 1134312, 1135299, 1644167177, 2852322013, 4282851542, 3291818232, 2996261038, 1135299, 1761607689, 2223141609, 3874183367, 3481165730, 1206447814, 2184296070, 'en-US', 1761607689, 2344801326, 1273138657, 'TypeError: Cyclic __proto__ value', 2528633899, 1134312, 1926139656, 3202146180, 1333052322, 3389762697, -1476394999, 1761607689, 1135299, 1761607689, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36', 'screen', 1135299, 4269636695, 'Etc/GMT-7', 958539996, '', [3158485428, 3841139926], 1644167177, 3371012358, '/i/jf/onboarding/web', 1133325, 'v', 154497471, False, 'vsaH', '1000', -218103805, True, -293, 1644167177, -293, 719666294, 3062923054, 108819, 3115927515, 'maybe', 226420589, 1115, 2465403218, 1644167177, 2987230625, 8706, 50949, 2689108000, 3279449934, False, 1616315364, 3209535535, 1790236937, 'M', 'tYA', 482780203, 1251212231, False, 1761607689, 1761607689, 1761607689, 44483, 'fb0a4aff', 3256600054, 4261525362, -294, 3066135454, 914597904, '10.0.0', -293, 1818538655, 3025743911, 231920158, 'Google Inc.', 2030043276, '[{"brand":"Chromium","version":"158.0.8127.37"},{"brand":"Not.A/Brand","version":"24.0.0.0"},{"brand":"Google Chrome","version":"158.0.8127.37"}]', 1102728, 'xU', 'cjP', [399166584, 3899839149], 716111564, -293, 1986836962, 1427939444, 2232079493, 23462, 1041224577, 'https://x.com', '', 'x.com', 'cba5f63a', 'Fvr', 477732489, 1135299, 860913, 1761607689, 1091097136, False, 1644167177, -293, 3028984159, 4085530361, -293, 477356403, '20030107', 4216978633, 'Illegal invocation', 52384, 4107465881, 705936703, -294, 622121676, 3246044039, 'NA', 1618887667, 'kpgg', 887121918, 3134491410, 1761607689, 2648407784, 1135299, '', 1889736806, 2901272238, 3291944030, 722098866, 2184393562, True, 676792557, 1114443584, 3428929872, 'a6563aaf', 4248617800, 3464153525, 1660944393, 3414720394, 2234214945, 570697895, -467, 756219386, 1644167177, 997608760, 1761607689, 4131736953, 1736205770, 173872954, '6f013', 46915, 1306166655, 'a9', 'f', '557', 'dd22bfaf', 46, 2132381, 36064, 60994, 11172, 3349559420, 1076358260, 0.0, 0.3, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 1.4, 0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.9, 0.0, 0.0, 0.1, 0.0, 0.0, 0.1, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.1, 0.3, 0.0, 0.1, 0.0, 0.0, 2.8, 0.0, 18.7, 0.0, 0.1, 0.1, 0.0, 0.2, 0.2, 0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 288.9, 0.3, 53.2, 0.0, 248.1, 312.3, 228.1, 227.2, 127.8, 279.3, 305.0, 21.9, 49.4, 228.5, 423.6, 229.7, 231.2, 277.9, 291.0, 264.9, 293.6)
 
 # Template đầy đủ 772 phần tử trích xuất từ mẫu token V3 thực tế (Chrome 156 / Windows 10 / x.com)
 V3_REAL_BASELINE_RAW: Tuple[Any, ...] = (
@@ -1998,6 +2166,7 @@ class CastleTokenGenerator:
         1: "uq1seNrd",
         2: "cNz8rPYH",
         3: "WcmFKZlD",
+        4: "EZK-f_Qb",
     }
 
     def __init__(self, workspace_dir: Optional[str] = None):
@@ -2026,6 +2195,28 @@ class CastleTokenGenerator:
         """
         ver = self.field_generator._normalize_version(version)
         encoded = list(unencrypted_metrics)
+
+        if ver == 4:
+            for i, val in enumerate(encoded):
+                if 691 <= i <= 775 and isinstance(val, (int, float)) and not isinstance(val, bool):
+                    if val not in (161, 165, 173):
+                        encoded[i] = encode_wd_float32(float(val))
+                elif i == 53 and isinstance(val, str):
+                    encoded[i] = encode_v3_os_field(val)
+                elif i == 78 and isinstance(val, str):
+                    encoded[i] = encode_v3_shader_field(val)
+                elif i in V3_INT_A_PROFILE_INDICES and isinstance(val, int) and not isinstance(val, bool):
+                    if decode_v3_int_a(val) is None:
+                        encoded[i] = encode_v3_int_a(val)
+                elif i in V3_INT_B_PROFILE_INDICES and isinstance(val, int) and not isinstance(val, bool):
+                    if decode_v3_int_b(val) is None:
+                        encoded[i] = encode_v3_int_b(val)
+                elif i in V3_RAW_STR_INDICES:
+                    encoded[i] = val
+                elif isinstance(val, str) and val:
+                    if decode_nr(val) is None:
+                        encoded[i] = encode_nr(val)
+            return encoded
 
         if ver == 3:
             for i, val in enumerate(encoded):
@@ -2161,7 +2352,7 @@ class CastleTokenGenerator:
             clean_metrics = list(unencrypted_metrics)
             if overrides:
                 info_map = (
-                    METRIC_INFO_V3 if ver == 3 else (METRIC_INFO_V2 if ver == 2 else METRIC_LABELS)
+                    METRIC_INFO_V4 if ver == 4 else (METRIC_INFO_V3 if ver == 3 else (METRIC_INFO_V2 if ver == 2 else METRIC_LABELS))
                 )
                 slug_to_idx = {
                     (v[0] if isinstance(v, tuple) else v): k for k, v in info_map.items()
@@ -2199,7 +2390,9 @@ class CastleTokenGenerator:
         checksum_hex = auth_header[8:24].hex()
 
         # 5. Mã hoá khóa thời gian 13 chữ số (Timestamp Key)
-        if ver == 3:
+        if ver == 4:
+            key_b64 = encode_nr(ts_str)
+        elif ver == 3:
             key_b64 = encode_gn(ts_str)
         elif ver == 2:
             key_b64 = encode_lr(ts_str)
@@ -2249,7 +2442,7 @@ class CastleTokenGenerator:
         """
         if isinstance(decoded_data, list):
             clean_metrics = list(decoded_data)
-            ver = version or (3 if len(clean_metrics) >= 772 else (2 if len(clean_metrics) >= 765 else 1))
+            ver = version or (4 if len(clean_metrics) >= 776 else (3 if len(clean_metrics) >= 772 else (2 if len(clean_metrics) >= 765 else 1)))
             ts = timestamp_ms
         elif isinstance(decoded_data, dict):
             clean_metrics = (
@@ -2262,7 +2455,7 @@ class CastleTokenGenerator:
             if clean_metrics is None:
                 raise ValueError("JSON đầu vào không chứa mảng metrics ('all_metrics_cleaned' hoặc 'raw_metrics_array').")
             ver = version or decoded_data.get("token_version") or (
-                3 if len(clean_metrics) >= 772 else (2 if len(clean_metrics) >= 765 else 1)
+                4 if len(clean_metrics) >= 776 else (3 if len(clean_metrics) >= 772 else (2 if len(clean_metrics) >= 765 else 1))
             )
             if timestamp_ms is None:
                 ts = (
@@ -2317,8 +2510,8 @@ def main() -> None:
         description="Castle Anti-Bot Unencrypted Field & Token Generator (V1 / V2 / V3)"
     )
     parser.add_argument(
-        "--version", "-v", default="v3", choices=["v1", "v2", "v3", "1", "2", "3"],
-        help="Phiên bản Castle token cần sinh: v1 (uq1seNrd), v2 (cNz8rPYH), v3 (WcmFKZlD). Mặc định: v3"
+        "--version", "-v", default="v4", choices=["v1", "v2", "v3", "v4", "1", "2", "3", "4"],
+        help="Phiên bản Castle token cần sinh: v1 (uq1seNrd), v2 (cNz8rPYH), v3 (WcmFKZlD), v4 (EZK-f_Qb). Mặc định: v4"
     )
     parser.add_argument("--ip", help="Địa chỉ IP client (ví dụ: 40.221.213.80)")
     parser.add_argument("--os", dest="os_name", help="Tên hệ điều hành (ví dụ: Windows, Macintosh, Linux)")

@@ -10,16 +10,17 @@
 
 ### Nedir?
 
-Castle, Twitter/X.com'un kullanicilarin tarayici ve cihaz bilgilerini toplayan anti-bot telemetri sistemidir. Bu arac, Castle tokenlarini cozumleyerek icerdikleri **765 metrigi** okunabilir formatta gosterir.
+Castle, Twitter/X.com'un kullanicilarin tarayici ve cihaz bilgilerini toplayan anti-bot telemetri sistemidir. Bu arac, Castle tokenlarini cozumleyerek icerdikleri tum metrikleri (**V1: 749, V2: 768, V3: 772, V4: 776 metrik**) okunabilir formatta gosterir.
 
 ### Ozellikler
 
-- **V1 ve V2 sifreleme destegi** - Her iki Castle protokol versiyonunu da cozer
-- **765 metrik analizi** - Tum metrikler etiketli, kategorize edilmis ve formatlanmis
+- **V1, V2, V3 ve V4 sifreleme destegi** - Tum Castle protokol versiyonlarini (uq1seNrd, cNz8rPYH, WcmFKZlD, EZK-f_Qb) cozer ve uretir
+- **776 metrik analizi** - Tum metrikler etiketli, kategorize edilmis ve formatlanmis
 - **11 kategori** - Token/Protokol, Sistem, Tarayici, Ekran, Parmak Izi, Medya, Prob/Test, Ag, Oturum, Olay, Font Testi
 - **Tamamen istemci tarafli** - Sunucu yok, veri disari gonderilmez, sadece tarayicinizda calisir
-- **Font prob analizi** - 82 font yukluluk durumu (indeks 683-764)
-- **IP adresi cozumleme** - Gercek istemci IP'si (indeks 473, lr-decode)
+- **Font ve Asenkron prob analizi** - Font yukluluk ve asenkron prob sureleri analizi (V4 indeks 691-775)
+- **IP adresi ve Cihaz GUID cozumleme** - Gercek istemci IP'si, tarayici parmak izleri ve donanim kimlikleri
+- **Pure Python & Pure JS** - Harici tarayici (Playwright/Puppeteer) bagimliligi olmadan %100 saf kodla calisir
 - **GitHub Pages** - Kurulum gerektirmez, dogrudan web uzerinden kullanin
 
 ### Kullanim

@@ -1,0 +1,2 @@
+(function(){try{var e=typeof globalThis<`u`?globalThis:typeof window<`u`?window:typeof global<`u`?global:typeof self<`u`?self:{},t=`Error
+    at `+import.meta.url+`:1:1`;t&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[t]=`f8b46296-55db-4452-9e3e-ba27e411e86e`,e._sentryDebugIdIdentifier=`sentry-dbid-f8b46296-55db-4452-9e3e-ba27e411e86e`)}catch{}})();import{a as e,r as t,t as n}from"./Bz63uEaL.js";t();export{n as buildReferralMapping,e as scribeExternalReferer};

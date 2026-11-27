@@ -48,6 +48,7 @@ class CastleTokenDecoder:
         return {
             "status": "success",
             "token_version": pure_res["token_version"],
+            "version": pure_res.get("version"),
             "security_verdict": pure_res["security_verdict"],
             "security_verdict_tr": pure_res["security_verdict_tr"],
             "timestamp": {
@@ -68,24 +69,39 @@ class CastleTokenDecoder:
                 "client_ip": p["ip_address"],
                 "client_os": p["operating_system"],
                 "browser_build": p["browser_version"],
-                "device_id_fingerprint": p["device_guid"],
+                "device_id_fingerprint": p.get("device_fingerprint", p.get("device_guid")),
+                "device_guid": p.get("device_guid", "Bilinmiyor"),
+                "platform": p.get("platform", "Bilinmiyor"),
+                "origin_url": p.get("origin_url", ""),
+                "page_title": p.get("page_title", ""),
                 "bot_flags": b
             },
             "categories": {
-                "network": {"ip": p["ip_address"]},
+                "network": {
+                    "ip": p["ip_address"],
+                    "origin_url": p.get("origin_url", ""),
+                    "page_title": p.get("page_title", "")
+                },
                 "device": {
                     "os": p["operating_system"],
                     "browser_version": p["browser_version"],
-                    "device_fingerprint": p["device_guid"],
-                    "architecture": "x86_64"
+                    "device_guid": p.get("device_guid", "Bilinmiyor"),
+                    "device_fingerprint": p.get("device_fingerprint", p.get("device_guid")),
+                    "user_agent": p.get("user_agent", "Bilinmiyor"),
+                    "gpu": p.get("gpu_renderer", "Bilinmiyor"),
+                    "timezone": p.get("timezone", "Bilinmiyor"),
+                    "locale": p.get("locale", "Bilinmiyor"),
+                    "platform": p.get("platform", "Bilinmiyor"),
+                    "architecture": p.get("architecture", "x86_64")
                 },
                 "screen_and_display": {
-                    "resolution": p["screen_resolution"],
-                    "pixel_ratio": p["pixel_ratio"]
+                    "resolution": p.get("screen_resolution", p.get("platform", "1920x1080")),
+                    "pixel_ratio": p.get("pixel_ratio", 1)
                 },
                 "bot_detection": b,
                 "font_and_canvas": g
             },
+            "formatted_metrics": pure_res.get("formatted_metrics", []),
             "labeled_metrics": pure_res["labeled_metrics"],
             "raw_metrics_array": pure_res["all_metrics_cleaned"]
         }

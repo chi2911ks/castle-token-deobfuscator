@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Castle Token Deobfuscator</title>
+    <title>Castle Token Deobfuscator &mdash; Anti-Bot Analysis Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -389,7 +389,7 @@
                 Castle Intelligence
             </div>
             <h1>Token Deobfuscator</h1>
-            <p class="subtitle">Twitter / X.com Castle anti-bot telemetri tokenlarını (V1 / V2 / V3 WcmFKZlD) tarayıcıda çözümler ve tüm metrikleri okunabilir formatta sunar.</p>
+            <p class="subtitle">Client-side decoder & analyzer for Twitter / X.com Castle anti-bot telemetry tokens (V1 / V2 / V3 WcmFKZlD / V4 EZK-f_Qb). Decodes all internal metrics into human-readable format.</p>
         </header>
 
         <div id="error-bar" class="error-bar"></div>
@@ -398,14 +398,14 @@
         <div class="panel">
             <div class="panel-title">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                Castle Token Girişi
+                Castle Token Input
             </div>
-            <textarea id="token-input" placeholder="WcmFKZlD|..., cNz8rPYH|... veya uq1seNrd|... ile başlayan Castle tokenınızı buraya yapıştırın..."></textarea>
+            <textarea id="token-input" placeholder="Paste your Castle token starting with EZK-f_Qb|..., WcmFKZlD|..., cNz8rPYH|... or uq1seNrd|... here..."></textarea>
             <div class="actions">
-                <button class="btn btn-ghost" id="btn-clear">Temizle</button>
+                <button class="btn btn-ghost" id="btn-clear">Clear</button>
                 <button class="btn btn-primary" id="btn-decode">
                     <div class="spinner" id="spinner"></div>
-                    <span id="btn-text">Çözümle</span>
+                    <span id="btn-text">Decode</span>
                 </button>
             </div>
         </div>
@@ -416,7 +416,7 @@
                 <div class="stat">
                     <div class="stat-label">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Zaman Damgası (UTC)
+                        Timestamp (UTC)
                     </div>
                     <div class="stat-val" id="s-time" style="font-size:1rem;">-</div>
                     <div class="stat-sub" id="s-ts">-</div>
@@ -424,15 +424,15 @@
                 <div class="stat">
                     <div class="stat-label">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                        İstemci IP Adresi
+                        Client IP Address
                     </div>
                     <div class="stat-val cyan" id="s-ip">-</div>
-                    <div class="badge ok" id="s-header-badge" style="margin-top:4px"><span class="dot-sm"></span>Ağ Doğrulandı</div>
+                    <div class="badge ok" id="s-header-badge" style="margin-top:4px"><span class="dot-sm"></span>Network Verified</div>
                 </div>
                 <div class="stat">
                     <div class="stat-label">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                        İşletim Sistemi
+                        Operating System
                     </div>
                     <div class="stat-val" id="s-os" style="font-size:1rem;">-</div>
                     <div class="stat-sub" id="s-browser">-</div>
@@ -440,7 +440,7 @@
                 <div class="stat">
                     <div class="stat-label">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        Güvenlik Durumu
+                        Security Verdict
                     </div>
                     <div class="stat-val" id="s-verdict" style="font-size:0.95rem;">-</div>
                     <div class="badge ok" id="s-verdict-badge" style="margin-top:4px">-</div>
@@ -450,29 +450,29 @@
             <!-- TABS -->
             <div class="panel" style="padding-bottom:1.5rem;">
                 <div class="tabs">
-                    <button class="tab active" data-tab="t-overview">Genel Bakış</button>
-                    <button class="tab" data-tab="t-metrics">Tüm Metrikler</button>
-                    <button class="tab" data-tab="t-fonts">Prob Süreleri & Font</button>
-                    <button class="tab" data-tab="t-json">JSON</button>
+                    <button class="tab active" data-tab="t-overview">Overview</button>
+                    <button class="tab" data-tab="t-metrics">All Metrics</button>
+                    <button class="tab" data-tab="t-fonts">Probe Timings & Fonts</button>
+                    <button class="tab" data-tab="t-json">Raw JSON</button>
                 </div>
 
                 <!-- Overview -->
                 <div class="tab-pane active" id="t-overview">
                     <div class="stat-grid">
                         <div class="stat">
-                            <div class="stat-label">Platform / Mimari</div>
+                            <div class="stat-label">Platform / Architecture</div>
                             <div class="stat-val" id="d-screen">-</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-label">GPU Isleyici</div>
+                            <div class="stat-label">GPU Renderer</div>
                             <div class="stat-val" id="d-display" style="font-size:0.7rem;">-</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-label">Cihaz Parmak İzi (GUID)</div>
+                            <div class="stat-label">Device Fingerprint (GUID)</div>
                             <div class="stat-val" id="d-guid" style="font-size:0.75rem;">-</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-label">Sıkıştırma Oranı</div>
+                            <div class="stat-label">Compression Ratio</div>
                             <div class="stat-val" id="d-compress">-</div>
                         </div>
                     </div>
@@ -482,7 +482,7 @@
                             <div id="d-webdriver">-</div>
                         </div>
                         <div class="stat">
-                            <div class="stat-label">Otomasyon</div>
+                            <div class="stat-label">Automation</div>
                             <div id="d-automation">-</div>
                         </div>
                         <div class="stat">
@@ -504,36 +504,36 @@
                 <div class="tab-pane" id="t-metrics">
                     <div class="tbl-bar">
                         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;flex:1;">
-                            <input type="text" class="search" id="tbl-search" placeholder="İndeks (#473), etiket veya değere göre ara... ( / )">
+                            <input type="text" class="search" id="tbl-search" placeholder="Search by index (#473), label, or value... ( / )">
                             <select id="cat-filter" class="search" style="width:170px;cursor:pointer;">
-                                <option value="">Tüm Kategoriler</option>
-                                <option value="Token/Protokol">Token/Protokol</option>
-                                <option value="Sistem">Sistem</option>
-                                <option value="Tarayici">Tarayıcı</option>
-                                <option value="Ekran">Ekran</option>
-                                <option value="Parmak Izi">Parmak İzi</option>
-                                <option value="Medya">Medya</option>
-                                <option value="Prob/Test">Prob/Test</option>
-                                <option value="Ag">Ağ</option>
-                                <option value="Oturum">Oturum</option>
-                                <option value="Olay">Olay</option>
-                                <option value="Sure Olcumu">Süre Ölçümü</option>
-                                <option value="Font Testi">Font Testi</option>
+                                <option value="">All Categories</option>
+                                <option value="Token/Protokol">Token / Protocol</option>
+                                <option value="Sistem">System</option>
+                                <option value="Tarayici">Browser</option>
+                                <option value="Ekran">Screen</option>
+                                <option value="Parmak Izi">Fingerprint</option>
+                                <option value="Medya">Media</option>
+                                <option value="Prob/Test">Probe / Test</option>
+                                <option value="Ag">Network</option>
+                                <option value="Oturum">Session</option>
+                                <option value="Olay">Event</option>
+                                <option value="Sure Olcumu">Timing Measurement</option>
+                                <option value="Font Testi">Font Test</option>
                             </select>
                             <label style="display:inline-flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text-2);cursor:pointer;user-select:none;">
                                 <input type="checkbox" id="hide-empty" style="accent-color:var(--cyan);">
-                                Boş / Ölçülmeyenleri Gizle
+                                Hide Empty / Unmeasured
                             </label>
                         </div>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <button class="btn btn-ghost" id="btn-export-csv" style="padding:0.4rem 0.8rem;font-size:0.75rem;">CSV İndir</button>
-                            <button class="btn btn-ghost" id="btn-export-md" style="padding:0.4rem 0.8rem;font-size:0.75rem;">MD Kopyala</button>
+                            <button class="btn btn-ghost" id="btn-export-csv" style="padding:0.4rem 0.8rem;font-size:0.75rem;">Export CSV</button>
+                            <button class="btn btn-ghost" id="btn-export-md" style="padding:0.4rem 0.8rem;font-size:0.75rem;">Copy MD</button>
                             <span class="stat-sub" id="tbl-count">-</span>
                         </div>
                     </div>
                     <div class="tbl-wrap">
                         <table>
-                            <thead><tr><th style="width:55px">#</th><th style="width:200px">Etiket</th><th style="width:110px">Kategori</th><th style="width:70px">Tip</th><th>Değer</th></tr></thead>
+                            <thead><tr><th style="width:55px">#</th><th style="width:200px">Label</th><th style="width:110px">Category</th><th style="width:70px">Type</th><th>Value</th></tr></thead>
                             <tbody id="tbl-body"></tbody>
                         </table>
                     </div>
@@ -541,10 +541,10 @@
 
                 <!-- Fonts -->
                 <div class="tab-pane" id="t-fonts">
-                    <p style="color:var(--text-3);margin-bottom:1rem;font-size:0.85rem;">Castle, indeks 683-764 arasında her telemetri toplayıcısının çalışma süresini (ms) ve font probe sonuçlarını kaydeder.</p>
+                    <p style="color:var(--text-3);margin-bottom:1rem;font-size:0.85rem;">Castle records execution timing (ms) and font probe measurements for each telemetry collector in the probe range.</p>
                     <div class="tbl-wrap">
                         <table>
-                            <thead><tr><th style="width:60px">#</th><th style="width:260px">Etiket</th><th>Değer / Süre</th></tr></thead>
+                            <thead><tr><th style="width:60px">#</th><th style="width:260px">Label</th><th>Value / Duration</th></tr></thead>
                             <tbody id="font-body"></tbody>
                         </table>
                     </div>
@@ -553,8 +553,8 @@
                 <!-- JSON -->
                 <div class="tab-pane" id="t-json">
                     <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:1rem;">
-                        <button class="btn btn-ghost" id="btn-copy" style="padding:0.5rem 1rem;font-size:0.8rem;">Kopyala</button>
-                        <button class="btn btn-ghost" id="btn-dl" style="padding:0.5rem 1rem;font-size:0.8rem;">İndir</button>
+                        <button class="btn btn-ghost" id="btn-copy" style="padding:0.5rem 1rem;font-size:0.8rem;">Copy</button>
+                        <button class="btn btn-ghost" id="btn-dl" style="padding:0.5rem 1rem;font-size:0.8rem;">Download</button>
                     </div>
                     <pre class="json" id="json-out"></pre>
                 </div>
@@ -562,7 +562,7 @@
         </div>
 
         <div class="footer">
-            Castle Token Deobfuscator &mdash; Tamamen tarayıcıda çalışır, sunucuya veri gönderilmez.
+            Castle Token Deobfuscator &mdash; Runs 100% in your browser. No data is sent to external servers.
         </div>
     </div>
 
@@ -599,7 +599,7 @@
             err.style.display = 'none';
 
             if (!token) {
-                err.textContent = "Lütfen geçerli bir Castle token girin.";
+                err.textContent = "Please enter a valid Castle token.";
                 err.style.display = 'block';
                 return;
             }
@@ -607,18 +607,18 @@
             const spinner = document.getElementById('spinner');
             const btnText = document.getElementById('btn-text');
             spinner.style.display = 'inline-block';
-            btnText.textContent = 'Çözümleniyor...';
+            btnText.textContent = 'Decoding...';
 
             setTimeout(() => {
                 try {
                     decoded = decodeCastleToken(token);
                     renderResults(decoded);
                 } catch (e) {
-                    err.textContent = "Hata: " + e.message;
+                    err.textContent = "Error: " + e.message;
                     err.style.display = 'block';
                 } finally {
                     spinner.style.display = 'none';
-                    btnText.textContent = 'Çözümle';
+                    btnText.textContent = 'Decode';
                 }
             }, 50);
         });
@@ -630,8 +630,8 @@
 
         function boolBadge(val, trueLabel, falseLabel) {
             return val
-                ? `<span class="badge bad"><span class="dot-sm"></span>${trueLabel || 'EVET'}</span>`
-                : `<span class="badge ok"><span class="dot-sm"></span>${falseLabel || 'HAYIR'}</span>`;
+                ? `<span class="badge bad"><span class="dot-sm"></span>${trueLabel || 'YES'}</span>`
+                : `<span class="badge ok"><span class="dot-sm"></span>${falseLabel || 'NO'}</span>`;
         }
 
         function renderResults(d) {
@@ -653,21 +653,21 @@
             if (headerOk) {
                 hdrBadge.className = 'badge ok';
                 hdrBadge.style.marginTop = '4px';
-                hdrBadge.innerHTML = '<span class="dot-sm"></span>Başlık Doğrulandı';
+                hdrBadge.innerHTML = '<span class="dot-sm"></span>Header Verified';
             } else {
                 hdrBadge.className = 'badge warn';
                 hdrBadge.style.marginTop = '4px';
-                hdrBadge.innerHTML = '<span class="dot-sm"></span>Başlık Uyumsuz';
+                hdrBadge.innerHTML = '<span class="dot-sm"></span>Header Mismatch';
             }
 
             const bot = d.metrics_summary.bot_flags;
             document.getElementById('s-verdict').textContent = bot.consistency_score;
             const vb = document.getElementById('s-verdict-badge');
             if (bot.automation_detected || bot.webdriver_active || bot.cdp_active) {
-                vb.innerHTML = '<span class="dot-sm"></span>BOT TESPIT EDILDI';
+                vb.innerHTML = '<span class="dot-sm"></span>BOT DETECTED';
                 vb.className = 'badge bad';
             } else {
-                vb.innerHTML = '<span class="dot-sm"></span>GUVENLI';
+                vb.innerHTML = '<span class="dot-sm"></span>GENUINE / SAFE';
                 vb.className = 'badge ok';
             }
 
@@ -699,7 +699,7 @@
                     tr.dataset.empty = isEmpty ? '1' : '0';
                     tr.dataset.index = String(m.index);
                     const catClass = 'cat-' + normalizeTrCat(m.category);
-                    tr.innerHTML = `<td class="idx">#${m.index}</td><td class="metric-label" title="${esc(m.label)}">${esc(m.label)}</td><td><span class="cat-pill ${catClass}">${esc(m.category)}</span></td><td><span class="type-pill">${m.type}</span></td><td class="metric-val" title="Kopyalamak için tıklayın">${esc(String(m.value))}</td>`;
+                    tr.innerHTML = `<td class="idx">#${m.index}</td><td class="metric-label" title="${esc(m.label)}">${esc(m.label)}</td><td><span class="cat-pill ${catClass}">${esc(m.category)}</span></td><td><span class="type-pill">${m.type}</span></td><td class="metric-val" title="Click to copy">${esc(String(m.value))}</td>`;
                     frag.appendChild(tr);
                 }
             } else {
@@ -721,8 +721,9 @@
             // Fonts / Probe times
             const fb = document.getElementById('font-body');
             const fontFrag = document.createDocumentFragment();
+            const isV4 = d.token_version === 'EZK-f_Qb' || (fmt.length >= 776);
             const isV3 = d.token_version === 'WcmFKZlD' || (fmt.length >= 772);
-            const fontStart = isV3 ? 687 : 683, fontEnd = (fmt.length || d.raw_metrics_array.length) - 1;
+            const fontStart = isV4 ? 691 : (isV3 ? 687 : 683), fontEnd = (fmt.length || d.raw_metrics_array.length) - 1;
             for (let i = fontStart; i <= fontEnd; i++) {
                 const tr = document.createElement('tr');
                 if (fmt.length > i) {
@@ -765,7 +766,7 @@
                 tr.style.display = '';
                 visible++;
             });
-            document.getElementById('tbl-count').textContent = `${visible} / ${total} metrik`;
+            document.getElementById('tbl-count').textContent = `${visible} / ${total} metrics`;
         }
 
         document.getElementById('tbl-search').addEventListener('input', applyTableFilters);
@@ -800,7 +801,7 @@
                 csv = exportMetricsToCSV(decoded);
             } else {
                 const escCSV = v => { const s = v == null ? '' : String(v); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
-                const headers = "Index,Etiket,Kategori,Tip,Deger,Ham";
+                const headers = "Index,Label,Category,Type,Value,Raw";
                 const rows = (decoded.formatted_metrics || []).map(m =>
                     [m.index, escCSV(m.label), escCSV(m.category), escCSV(m.type), escCSV(m.value), escCSV(typeof m.raw === 'object' ? JSON.stringify(m.raw) : m.raw)].join(',')
                 );
@@ -822,14 +823,14 @@
                 md = exportMetricsToMarkdown(decoded);
             } else {
                 const s = decoded.metrics_summary;
-                md = `# Castle Token Analiz Raporu\n\n`;
+                md = `# Castle Token Analysis Report\n\n`;
                 md += `- **Protokol:** \`${decoded.token_version}\`\n`;
-                md += `- **Zaman (UTC):** \`${decoded.timestamp.iso_utc}\`\n`;
+                md += `- **Time (UTC):** \`${decoded.timestamp.iso_utc}\`\n`;
                 md += `- **IP:** \`${s.client_ip}\`\n`;
-                md += `- **OS / Tarayıcı:** \`${s.client_os}\` / \`${s.browser_build}\`\n`;
-                md += `- **Cihaz GUID:** \`${s.device_id_fingerprint}\`\n`;
-                md += `- **Durum:** **${decoded.security_verdict_tr}**\n\n`;
-                md += `| # | Etiket | Kategori | Tip | Değer |\n|---:|---|---|---|---|\n`;
+                md += `- **OS / Browser:** \`${s.client_os}\` / \`${s.browser_build}\`\n`;
+                md += `- **Device GUID:** \`${s.device_id_fingerprint}\`\n`;
+                md += `- **Verdict:** **${decoded.security_verdict}**\n\n`;
+                md += `| # | Label | Category | Type | Value |\n|---:|---|---|---|---|\n`;
                 for (const m of (decoded.formatted_metrics || [])) {
                     if (m.raw !== null && m.raw !== 165 && m.raw !== 161 && m.raw !== 173) {
                         const sv = String(m.value).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
@@ -839,8 +840,8 @@
             }
             navigator.clipboard.writeText(md).then(() => {
                 const b = document.getElementById('btn-export-md');
-                b.textContent = 'Kopyalandı!';
-                setTimeout(() => b.textContent = 'MD Kopyala', 1500);
+                b.textContent = 'Copied!';
+                setTimeout(() => b.textContent = 'Copy MD', 1500);
             }).catch(() => {});
         });
 
@@ -849,8 +850,8 @@
             if (!decoded) return;
             navigator.clipboard.writeText(JSON.stringify(decoded, null, 2));
             const b = document.getElementById('btn-copy');
-            b.textContent = 'Kopyalandı!';
-            setTimeout(() => b.textContent = 'Kopyala', 1500);
+            b.textContent = 'Copied!';
+            setTimeout(() => b.textContent = 'Copy', 1500);
         });
 
         document.getElementById('btn-dl').addEventListener('click', () => {

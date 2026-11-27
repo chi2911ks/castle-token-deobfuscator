@@ -18,9 +18,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 def main() -> None:
     # Thông tin đăng nhập
-    username_or_email = "chi2911ksO"
-    fallback_username = "chi2911ksO"
-    password = "Chi@29112004"
+    username_or_email = ""
+    fallback_username = ""
+    password = ""
 
     # 1. Khởi tạo thông tin định danh đồng bộ giữa Header, Cookie (__cuid) và Castle Token
     user_agent = (

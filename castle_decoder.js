@@ -929,6 +929,74 @@ for (let i = 683; i <= 746; i++) {
     }
 }
 
+const PROBE_TIME_START_V4 = 691;
+const PROBE_TIME_END_V4 = 775;
+
+const METRIC_INFO_V4 = {
+    1: ["page_title", "Sayfa Basligi (document.title)", "network"],
+    18: ["resolution_pair", "Cozunurluk Hash Cifti", "screen"],
+    71: ["architecture", "Islemci Mimarisi (x86/arm)", "system"],
+    111: ["gpu_renderer_unmasked", "GPU Renderer (Unmasked WebGL)", "browser"],
+    133: ["device_guid", "Cihaz GUID / Donanim Parmak Izi", "fingerprint"],
+    154: ["window_client_id", "Pencere Istemci UUID", "session"],
+    159: ["canvas_2d_hash", "Canvas 2D Grafik Parmak Izi", "fingerprint"],
+    173: ["browser_version_short", "Tarayici Surumu (Kisa)", "browser"],
+    186: ["castle_pubkey", "Castle Ortam / Public Key", "token"],
+    190: ["webrtc_proto", "WebRTC Aktarim Protokolu", "probe"],
+    192: ["locale", "Yerel Ayar (Locale)", "system"],
+    257: ["browser_version_full", "Tarayici Surumu (Tam)", "browser"],
+    263: ["gpu_vendor", "GPU Ureticisi (WebGL)", "browser"],
+    269: ["os_version", "Isletim Sistemi Surumu", "system"],
+    278: ["gpu_architecture", "GPU Mimarisi", "browser"],
+    310: ["os_name", "Isletim Sistemi Adi", "system"],
+    311: ["browser_name", "Tarayici Adi", "browser"],
+    314: ["platform", "Platform (navigator.platform)", "system"],
+    350: ["screen_orient", "Ekran Yonu (Orientation)", "screen"],
+    428: ["gpu_renderer", "GPU Renderer (WebGL)", "browser"],
+    429: ["client_ip", "Istemci IP Adresi (Public IP)", "network"],
+    436: ["session_id", "Oturum Kimligi (Session ID)", "session"],
+    458: ["ua_brands_short", "UA Marka Bilgisi (Kisa JSON)", "browser"],
+    463: ["accept_langs", "Kabul Edilen Diller", "browser"],
+    483: ["user_agent", "User-Agent", "browser"],
+    505: ["protocol", "Protokol (location.protocol)", "network"],
+    544: ["user_agent_raw", "User-Agent (Ham)", "browser"],
+    548: ["timezone", "Saat Dilimi (IANA)", "system"],
+    554: ["url_path", "URL Yolu (location.pathname)", "network"],
+    604: ["browser_vendor", "Tarayici Ureticisi (navigator.vendor)", "browser"],
+    606: ["ua_brands_full", "UA Marka Bilgisi (Tam JSON)", "browser"],
+    618: ["origin_url", "Kaynak URL (location.origin)", "network"],
+    620: ["site_domain", "Site Alan Adi (location.hostname)", "network"],
+    646: ["selenium_cdc_flag", "Selenium / ChromeDriver ($cdc_) Bayragi", "probe"],
+    755: ["probe_time_sync_total", "Senkron Problar Toplam Suresi (ms)", "timing"],
+    756: ["probe_time_total_token", "Toplam Token Uretim Suresi (ms)", "timing"],
+    757: ["probe_time_async_all", "18 Asenkron Prob Toplam Suresi (ms)", "timing"],
+    758: ["probe_time_async_0", "Asenkron Prob 0: Ilk baslatma (ms)", "timing"],
+    759: ["probe_time_async_1", "Asenkron Prob 1: UA HighEntropyValues (ms)", "timing"],
+    760: ["probe_time_async_2", "Asenkron Prob 2: MediaCapabilities (ms)", "timing"],
+    761: ["probe_time_async_3", "Asenkron Prob 3: Permissions API (ms)", "timing"],
+    762: ["probe_time_async_4", "Asenkron Prob 4: Medya Codec/DRM (ms)", "timing"],
+    763: ["probe_time_async_5", "Asenkron Prob 5: AudioContext Parmak Izi (ms)", "timing"],
+    764: ["probe_time_async_6", "Asenkron Prob 6: Worker Debugger Tespiti (ms)", "timing"],
+    765: ["probe_time_async_7", "Asenkron Prob 7: WebRTC SDP Analizi (ms)", "timing"],
+    766: ["probe_time_async_8", "Asenkron Prob 8: WebRTC ICE/IP Sizintisi (ms)", "timing"],
+    767: ["probe_time_async_9", "Asenkron Prob 9: Storage Estimate Kota (ms)", "timing"],
+    768: ["probe_time_async_10", "Asenkron Prob 10: WebGL/GPU Render (ms)", "timing"],
+    769: ["probe_time_async_11", "Asenkron Prob 11: MediaDevices Cihazlar (ms)", "timing"],
+    770: ["probe_time_async_12", "Asenkron Prob 12: Battery API Durumu (ms)", "timing"],
+    771: ["probe_time_async_13", "Asenkron Prob 13: SpeechSynthesis Sesler (ms)", "timing"],
+    772: ["probe_time_async_14", "Asenkron Prob 14: ServiceWorker Kayit (ms)", "timing"],
+    773: ["probe_time_async_15", "Asenkron Prob 15: WebGPU Adaptor (ms)", "timing"],
+    774: ["probe_time_async_16", "Asenkron Prob 16: Canvas/Font Async (ms)", "timing"],
+    775: ["probe_time_async_17", "Asenkron Prob 17: rAF Zamanlayici (ms)", "timing"]
+};
+
+// V3 687..750 senkron prob etiketlerini V4 691..754 indekslerine miras al
+for (let i = 687; i <= 750; i++) {
+    if (METRIC_INFO_V3[i] && !METRIC_INFO_V4[i + 4]) {
+        METRIC_INFO_V4[i + 4] = METRIC_INFO_V3[i];
+    }
+}
+
 const CATEGORY_TR = {
     token: "Token/Protokol", system: "Sistem", browser: "Tarayici", screen: "Ekran",
     fingerprint: "Parmak Izi", media: "Medya", probe: "Prob/Test",
@@ -981,6 +1049,54 @@ function _qdDecodeFloat32(b64Str) {
     }
 }
 
+function _wdDecodeFloat32(b64Str) {
+    if (typeof b64Str !== 'string' || b64Str.length < 4) return null;
+    try {
+        let padded = b64Str;
+        while (padded.length % 4 !== 0) padded += '=';
+        const bin = atob(padded);
+        if (bin.length !== 4) return null;
+        const buf = new ArrayBuffer(4);
+        const view = new DataView(buf);
+        for (let i = 0; i < 4; i++) {
+            let r = bin.charCodeAt(i) & 0xFF;
+            r = ((r >>> 5) | (r << 3)) & 0xFF;
+            r = (r - 118) & 0xFF;
+            r = ((r >>> 1) | (r << 7)) & 0xFF;
+            view.setUint8(i, r);
+        }
+        const f = view.getFloat32(0, false);
+        return (Number.isFinite(f) && f > -1e6 && f < 1e9) ? Number(f.toFixed(2)) : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function _isValidDecodedText(str) {
+    if (!str || typeof str !== 'string') return false;
+    for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        if (!((c >= 32 && c <= 126) || c === 9 || c === 10 || c === 13 || (c >= 0x00A0 && c <= 0x024F) || (c >= 0x2000 && c <= 0x206F))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function _v4DecodeValue(b64Str) {
+    if (typeof b64Str !== 'string' || b64Str.length < 4) return b64Str;
+    try {
+        let padded = b64Str;
+        while (padded.length % 4 !== 0) padded += '=';
+        const raw = _b64ToBytes(padded);
+        if (raw.length >= 2 && raw.length % 2 === 0) {
+            const dec = _recoverTimestampV4(raw);
+            if (dec && _isValidDecodedText(dec)) return dec;
+        }
+    } catch (_) {}
+    return b64Str;
+}
+
 function _formatValue(idx, val, version) {
     if (val === null || val === undefined) return "bos";
     if (val === true) return "Evet";
@@ -1004,6 +1120,28 @@ function _formatValue(idx, val, version) {
 
 function _getMetricInfo(idx, val, version) {
     const ver = version === true ? 2 : (version === false ? 1 : version);
+    if (ver === 4) {
+        if (METRIC_INFO_V4[idx]) {
+            const [slug, label, cat] = METRIC_INFO_V4[idx];
+            let displayVal = _formatValue(idx, val, ver);
+            if (cat === 'timing') {
+                if (typeof val === 'number') displayVal = val + " ms";
+                else if (typeof val === 'string') {
+                    const ms = _wdDecodeFloat32(val);
+                    if (ms !== null) displayVal = ms + " ms";
+                }
+            }
+            return { label, category: CATEGORY_TR[cat] || cat, value: displayVal };
+        }
+        if (idx >= PROBE_TIME_START_V4 && idx <= PROBE_TIME_END_V4) {
+            let displayVal = typeof val === 'number' ? (val + " ms") : _formatValue(idx, val, ver);
+            if (typeof val === 'string') {
+                const ms = _wdDecodeFloat32(val);
+                if (ms !== null) displayVal = ms + " ms";
+            }
+            return { label: "Prob Suresi #" + (idx - PROBE_TIME_START_V4) + " (ms)", category: CATEGORY_TR.timing, value: displayVal };
+        }
+    }
     if (ver === 3) {
         if (METRIC_INFO_V3[idx]) {
             const [slug, label, cat] = METRIC_INFO_V3[idx];
@@ -1118,17 +1256,31 @@ function _recoverTimestampV3(raw) {
     return result;
 }
 
+function _recoverTimestampV4(raw) {
+    let result = '';
+    for (let i = 0; i + 1 < raw.length; i += 2) {
+        let v = (raw[i] << 8) | raw[i + 1];
+        v = ((v << 5) | (v >>> 11)) & 0xFFFF;
+        v = (v - 0x486D) & 0xFFFF;
+        v = (v ^ 0x2042) & 0xFFFF;
+        result += String.fromCharCode(v);
+    }
+    return result;
+}
+
 function _recoverTimestampKey(keyB64) {
     let padded = keyB64;
     while (padded.length % 4 !== 0) padded += '=';
     const raw = _b64ToBytes(padded);
+    const v4 = _recoverTimestampV4(raw);
+    if (/^\d{13}$/.test(v4)) return { ts: v4, ver: 4 };
     const v3 = _recoverTimestampV3(raw);
-    if (/^\d{13}$/.test(v3)) return v3;
+    if (/^\d{13}$/.test(v3)) return { ts: v3, ver: 3 };
     const v2 = _recoverTimestampV2(raw);
-    if (/^\d{13}$/.test(v2)) return v2;
+    if (/^\d{13}$/.test(v2)) return { ts: v2, ver: 2 };
     const v1 = _recoverTimestampV1(raw);
-    if (/^\d{13}$/.test(v1)) return v1;
-    return v3;
+    if (/^\d{13}$/.test(v1)) return { ts: v1, ver: 1 };
+    return { ts: v4, ver: null };
 }
 
 // --- 2. Castle Akis Sifresi Cozucu (FNV-1a + Xorshift32) ---
@@ -1199,6 +1351,30 @@ function _decryptStreamV3(ciphertext, keyStr) {
             state = (state ^ (state >>> 17)) >>> 0;
             state = (state ^ (state << 5)) >>> 0;
             state = (state + 0x391BF9C5) >>> 0;
+        }
+        out[i] = ciphertext[i] ^ ((state >>> ((i & 3) << 3)) & 0xFF);
+    }
+    return out;
+}
+
+function _decryptStreamV4(ciphertext, keyStr) {
+    let h = 0xA72E5B0C;
+    for (let i = 0; i < keyStr.length; i++) {
+        h = Math.imul(h ^ keyStr.charCodeAt(i), 0x01000193) >>> 0;
+    }
+    if (h === 0) h = 0x9E3779B9;
+
+    let state = (h ^ 0x48375C16) >>> 0;
+    const out = new Uint8Array(ciphertext.length);
+
+    for (let i = 0; i < ciphertext.length; i++) {
+        if ((i & 3) === 0) {
+            state = (state + i + 0x17113533) >>> 0;
+            state = (state + 0x48375C16) >>> 0;
+            state = (state ^ (state << 13)) >>> 0;
+            state = (state ^ (state >>> 17)) >>> 0;
+            state = (state ^ (state << 5)) >>> 0;
+            state = (state + 0x0DDA1DEC) >>> 0;
         }
         out[i] = ciphertext[i] ^ ((state >>> ((i & 3) << 3)) & 0xFF);
     }
@@ -1465,7 +1641,9 @@ function decodeCastleToken(tokenStr) {
 
     let keyB64 = '';
     for (let i = 2; i < 2 + keyLen; i++) keyB64 += String.fromCharCode(raw[i]);
-    const tsStr = _recoverTimestampKey(keyB64);
+    const recovered = _recoverTimestampKey(keyB64);
+    const tsStr = typeof recovered === 'object' ? recovered.ts : recovered;
+    const keyVer = typeof recovered === 'object' ? recovered.ver : null;
     const tsMs = /^\d+$/.test(tsStr) ? parseInt(tsStr) : 0;
 
     const hOff = 2 + keyLen;
@@ -1477,37 +1655,60 @@ function decodeCastleToken(tokenStr) {
     const ciphertext = raw.slice(hOff + 24);
     const prefix = parts[0];
     let cipherOrder;
-    if (prefix === 'WcmFKZlD') {
-        cipherOrder = [[3, _decryptStreamV3], [2, _decryptStreamV2], [1, _decryptStream]];
+    if (prefix === 'EZK-f_Qb') {
+        cipherOrder = [[4, _decryptStreamV4], [3, _decryptStreamV3], [2, _decryptStreamV2], [1, _decryptStream]];
+    } else if (prefix === 'WcmFKZlD') {
+        cipherOrder = [[3, _decryptStreamV3], [4, _decryptStreamV4], [2, _decryptStreamV2], [1, _decryptStream]];
+    } else if (prefix === 'cNz8rPYH' || prefix === 'b4w0n8w3') {
+        cipherOrder = [[2, _decryptStreamV2], [4, _decryptStreamV4], [3, _decryptStreamV3], [1, _decryptStream]];
     } else if (prefix === 'uq1seNrd') {
-        cipherOrder = [[1, _decryptStream], [2, _decryptStreamV2], [3, _decryptStreamV3]];
+        cipherOrder = [[1, _decryptStream], [2, _decryptStreamV2], [3, _decryptStreamV3], [4, _decryptStreamV4]];
+    } else if (keyVer) {
+        const orderMap = {
+            4: [4, _decryptStreamV4],
+            3: [3, _decryptStreamV3],
+            2: [2, _decryptStreamV2],
+            1: [1, _decryptStream]
+        };
+        const rest = [4, 3, 2, 1].filter(v => v !== keyVer).map(v => orderMap[v]);
+        cipherOrder = [orderMap[keyVer], ...rest];
     } else {
-        cipherOrder = [[2, _decryptStreamV2], [3, _decryptStreamV3], [1, _decryptStream]];
+        cipherOrder = [[4, _decryptStreamV4], [2, _decryptStreamV2], [3, _decryptStreamV3], [1, _decryptStream]];
     }
 
-    let version = null, decrypted = null, decompressed = null, lastErr = null;
+    let version = null, decrypted = null, decompressed = null, metrics = null, lastErr = null;
     for (const [verNum, decFn] of cipherOrder) {
         try {
             const cand = decFn(ciphertext, tsStr);
             const inf = pako.inflateRaw(cand);
-            if (inf && inf.length > 0) {
-                decrypted = cand;
-                decompressed = inf;
-                version = verNum;
-                break;
+            if (inf && inf.length >= 100) {
+                const candMetrics = _deserialize(inf);
+                if (candMetrics && candMetrics.length >= 50) {
+                    decrypted = cand;
+                    decompressed = inf;
+                    version = verNum;
+                    metrics = candMetrics;
+                    break;
+                }
             }
         } catch (err) {
             lastErr = err;
         }
     }
-    if (version === null || !decompressed) {
-        throw new Error("Castle token akis sifresi cozulemedi (V1/V2/V3 uyumsuz): " + (lastErr ? lastErr.message : "inflate hatasi"));
+    if (version === null || !decompressed || !metrics) {
+        throw new Error("Castle token akis sifresi cozulemedi (V1/V2/V3/V4 uyumsuz): " + (lastErr ? lastErr.message : "inflate hatasi"));
     }
-
-    const metrics = _deserialize(decompressed);
 
     // Versiyona gore string deobfuscation ve prob suresi ayristirma
     const cleaned = metrics.map((val, idx) => {
+        if (version === 4) {
+            if (idx >= PROBE_TIME_START_V4 && idx <= PROBE_TIME_END_V4 && typeof val === 'string') {
+                const ms = _wdDecodeFloat32(val);
+                return ms !== null ? ms : val;
+            }
+            const decInt = _v3DecodeInt(idx, val);
+            return _cleanStr(_v4DecodeValue(decInt));
+        }
         if (version === 3) {
             if (idx >= PROBE_TIME_START_V3 && idx <= PROBE_TIME_END_V3 && typeof val === 'string') {
                 const ms = _qdDecodeFloat32(val);
@@ -1529,7 +1730,21 @@ function decodeCastleToken(tokenStr) {
     const m = (i, def) => cleaned.length > i && cleaned[i] != null ? cleaned[i] : def;
 
     let botDetected, webdriver, headless, devtools, cdp;
-    if (version === 3) {
+    if (version === 4) {
+        const cdcVal = m(646, "kpgg");
+        const botFlagCdc = (cdcVal === "udg");
+        webdriver = botFlagCdc || _isBoolTrue(cleaned, 43) || _isBoolTrue(cleaned, 506);
+        headless = _isBoolTrue(cleaned, 355);
+        const cdpVal = m(445, "N");
+        cdp = (typeof cdpVal === 'string' && cdpVal !== "N") || _isBoolTrue(cleaned, 445);
+        devtools = cdp;
+        botDetected = webdriver || headless || botFlagCdc ||
+            _isBoolTrue(cleaned, 68) || _isBoolTrue(cleaned, 92) ||
+            _isBoolTrue(cleaned, 176) || _isBoolTrue(cleaned, 218) ||
+            _isBoolTrue(cleaned, 228) || _isBoolTrue(cleaned, 244) ||
+            _isBoolTrue(cleaned, 416) || _isBoolTrue(cleaned, 527) ||
+            _isBoolTrue(cleaned, 535);
+    } else if (version === 3) {
         webdriver = _isBoolTrue(cleaned, 43) || _isBoolTrue(cleaned, 506);
         headless = _isBoolTrue(cleaned, 355);
         const cdpVal = m(445, "N");
@@ -1571,14 +1786,36 @@ function decodeCastleToken(tokenStr) {
     let clientOs, clientIp, browserBuild, deviceId, userAgent, gpuRenderer;
     let timezone, locale, pageTitle, originUrl, sessionId, platform;
     let canvasHash, audioHash, webglGpuCode, probeSlotCount;
+    let deviceGuid;
 
-    if (version === 3) {
+    if (version === 4) {
+        clientOs = m(310, "Bilinmiyor");
+        clientIp = m(429, "Bilinmiyor");
+        const browserName = m(311, "");
+        const browserVer = m(173, m(257, "Bilinmiyor"));
+        browserBuild = browserName ? (browserName + " " + browserVer).trim() : browserVer;
+        deviceId = String(m(133, m(154, "Bilinmiyor")));
+        deviceGuid = String(m(154, m(133, "Bilinmiyor")));
+        userAgent = m(483, m(544, "Bilinmiyor"));
+        gpuRenderer = m(428, m(111, "Bilinmiyor"));
+        timezone = m(548, "Bilinmiyor");
+        locale = m(192, "Bilinmiyor");
+        pageTitle = m(1, "");
+        originUrl = m(618, m(620, ""));
+        sessionId = m(436, "Bilinmiyor");
+        platform = (m(314, "") + " " + m(71, "")).trim();
+        canvasHash = m(159, null);
+        audioHash = m(190, null);
+        webglGpuCode = m(263, null);
+        probeSlotCount = PROBE_TIME_END_V4 - PROBE_TIME_START_V4 + 1;
+    } else if (version === 3) {
         clientOs = m(87, "Bilinmiyor");
         clientIp = m(212, "Bilinmiyor");
         const browserName = m(592, "");
         const browserVer = m(29, m(670, "Bilinmiyor"));
         browserBuild = browserName ? browserName + " " + browserVer : browserVer;
-        deviceId = m(160, "Bilinmiyor");
+        deviceId = String(m(160, "Bilinmiyor"));
+        deviceGuid = deviceId;
         userAgent = m(96, "Bilinmiyor");
         gpuRenderer = m(237, "Bilinmiyor");
         timezone = m(89, "Bilinmiyor");
@@ -1592,29 +1829,51 @@ function decodeCastleToken(tokenStr) {
         webglGpuCode = m(265, null);
         probeSlotCount = PROBE_TIME_END_V3 - PROBE_TIME_START_V3 + 1;
     } else if (version === 2) {
-        clientOs = m(8, "Bilinmiyor");
+        const osHint = String(m(324, ""));
+        const uaVal = String(m(638, ""));
+        const platVal = String(m(366, ""));
+        if (osHint.includes("Android") || uaVal.includes("Android")) {
+            const v28 = m(28, "");
+            clientOs = v28 ? ("Android " + v28) : "Android";
+        } else if (osHint.includes("Windows") || platVal.includes("Win")) {
+            clientOs = "Windows";
+        } else if (osHint.includes("Mac") || platVal.includes("Mac")) {
+            clientOs = "macOS";
+        } else if (osHint.includes("Linux") || platVal.includes("Linux")) {
+            clientOs = "Linux";
+        } else {
+            clientOs = m(366, "Bilinmiyor");
+        }
+
         clientIp = m(473, "Bilinmiyor");
         const browserName = m(101, "");
         const browserVer = m(248, "Bilinmiyor");
         browserBuild = browserName ? browserName + " " + browserVer : browserVer;
-        deviceId = m(668, "Bilinmiyor");
-        userAgent = m(63, "Bilinmiyor");
+        deviceId = String(m(647, m(668, "Bilinmiyor")));
+        deviceGuid = String(m(668, m(647, "Bilinmiyor")));
+        userAgent = m(638, m(63, "Bilinmiyor"));
         gpuRenderer = m(60, "Bilinmiyor");
         timezone = m(224, "Bilinmiyor");
         locale = m(67, "Bilinmiyor");
         pageTitle = m(308, "");
         originUrl = m(260, "");
         sessionId = m(622, "Bilinmiyor");
-        platform = (m(366, "") + " " + m(368, "")).trim();
-        canvasHash = m(135, null);
+        platform = (m(366, "") + " " + m(332, m(1, ""))).trim();
+        canvasHash = m(139, null);
         audioHash = m(143, null);
         webglGpuCode = m(11, null);
         probeSlotCount = PROBE_TIME_END - PROBE_TIME_START + 1;
+        webdriver = _isBoolTrue(cleaned, 22) || _isBoolTrue(cleaned, 391);
+        headless = _isBoolTrue(cleaned, 143) || _isBoolTrue(cleaned, 395) || _isBoolTrue(cleaned, 396);
+        devtools = _isBoolTrue(cleaned, 151);
+        cdp = _isBoolTrue(cleaned, 383);
+        botDetected = _isBoolTrue(cleaned, 44) || webdriver || headless || cdp;
     } else {
         clientOs = m(59, "Bilinmiyor");
         clientIp = m(406, "Bilinmiyor");
         browserBuild = m(551, "Bilinmiyor");
         deviceId = m(163, "Bilinmiyor");
+        deviceGuid = String(deviceId);
         userAgent = "Bilinmiyor";
         gpuRenderer = "Bilinmiyor";
         timezone = "Bilinmiyor";
@@ -1632,6 +1891,7 @@ function decodeCastleToken(tokenStr) {
     return {
         status: "success",
         token_version: parts[0],
+        version: version,
         security_verdict: isBot ? "FLAGGED_AS_BOT" : "VERIFIED_GENUINE_HUMAN",
         security_verdict_tr: isBot ? "SUPHELI / BOT (Tespit Edildi)" : "GUVENLI / GERCEK KULLANICI (Temiz)",
         timestamp: {
@@ -1654,6 +1914,7 @@ function decodeCastleToken(tokenStr) {
             client_os: clientOs,
             browser_build: browserBuild,
             device_id_fingerprint: deviceId,
+            device_guid: deviceGuid || deviceId,
             user_agent: userAgent,
             gpu_renderer: gpuRenderer,
             timezone: timezone,
@@ -1672,10 +1933,15 @@ function decodeCastleToken(tokenStr) {
             }
         },
         categories: {
-            network: { ip: clientIp },
+            network: {
+                ip: clientIp,
+                origin_url: originUrl,
+                page_title: pageTitle
+            },
             device: {
                 os: clientOs,
                 browser_version: browserBuild,
+                device_guid: deviceGuid || deviceId,
                 device_fingerprint: deviceId,
                 user_agent: userAgent,
                 gpu: gpuRenderer,
@@ -1789,3 +2055,20 @@ function exportMetricsToMarkdown(decodedObj) {
     }
     return md;
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+    if (typeof pako === 'undefined') {
+        try {
+            const zlib = require('zlib');
+            global.pako = {
+                inflateRaw: (buf) => zlib.inflateRawSync(Buffer.from(buf))
+            };
+        } catch (e) {}
+    }
+    module.exports = {
+        decodeCastleToken,
+        exportMetricsToCSV,
+        exportMetricsToMarkdown
+    };
+}
+
